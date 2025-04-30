@@ -82,8 +82,8 @@ Extra Response: b'Device Ready'
 
 This script is intended for prototyping and testing purposes. It is a great starting point for more advanced serial GUI tools with dynamic input, logging, or device-specific command sets.
 
-**Author:** *[Your Name]*  
-**Date:** *[Date]*
+**Author:** *Stephen Ranieri, Cody Cox, Ryan Wilson, Reece Swanson*  
+**Date:** *[4/30/2025]*
 
 ## License
 
