@@ -1,49 +1,41 @@
 
-# Serial Command Sender GUI
+# Serial Command Toolkit for CAN and UART Communication
 
-## Description
+This repository contains a set of Python scripts to interface with both UART and CAN communication systems. It includes a graphical interface for UART command sending and tools to send and log CAN messages using the Panda device.
 
-This is a Python-based graphical user interface (GUI) that allows users to send predefined hexadecimal commands over a serial port using buttons. It also monitors the serial port for incoming data and displays responses in the terminal.
+---
 
-The GUI is built using Tkinter, and serial communication is handled using the PySerial library. This tool is useful for interacting with embedded devices, development boards, or systems using UART communication.
+## Contents
 
-## Features
+- [`serial_command_gui.py`](#serial_command_gui.py): GUI for sending UART hex commands
+- [`sentMessages.py`](#sentmessagespy): Script to repeatedly send a CAN message via Panda
+- [`setupPanda.py`](#setuppandapy): Script to log incoming CAN messages to a CSV file
 
-- GUI with four buttons, each sending a different predefined command  
-- Configurable serial port and baud rate (default: COM4 @ 9600 baud)  
-- Real-time display of incoming serial data in the terminal  
-- Automatically closes the serial port when the application exits  
+---
 
-## Requirements
+## `serial_command_gui.py`
 
-- Python 3.x  
-- [pyserial](https://pypi.org/project/pyserial/) library
+### Description
 
-To install PySerial:
+A Python-based graphical user interface (GUI) to send predefined hexadecimal commands over a serial port using buttons. It also monitors the serial port for incoming data and prints responses to the terminal.
+
+### Features
+
+- GUI with four buttons
+- Configurable serial port and baud rate (default: COM4 @ 9600)
+- Real-time monitoring of UART input
+- Auto-closes the port on exit
+
+### Requirements
+
+- Python 3.x
+- [`pyserial`](https://pypi.org/project/pyserial/)
 
 ```bash
 pip install pyserial
 ```
 
-## Usage
-
-1. Connect your target device (e.g., microcontroller) to your computer via USB.  
-2. Update the COM port in the script if needed (default is `"COM4"`):
-
-```python
-ser = serial.Serial("COM4", 9600, timeout=1)
-```
-
-3. Run the script:
-
-```bash
-python serial_command_gui.py
-```
-
-4. A window will appear with four buttons. Each button sends a command when clicked.  
-5. Any response from the device is printed in the terminal in real time.  
-
-## Command Mapping
+### Command Mapping
 
 | Button   | Command Sent                            | ASCII Equivalent |
 |----------|------------------------------------------|------------------|
@@ -52,38 +44,85 @@ python serial_command_gui.py
 | Button 3 | `b'\x55\x56\x57\x58'`                    | UVWX             |
 | Button 4 | `b'\x61\x62\x63\x64'`                    | abcd             |
 
-## Customization
+---
 
-You can change the commands sent by editing the `commands` dictionary inside the script.
+## `sentMessages.py`
 
-To use a different COM port or baud rate, modify the following line:
+### Description
+
+This script sends a fixed CAN message repeatedly using the [Panda](https://comma.ai/panda/) device.
+
+### Requirements
+
+- Python 3.x
+- `panda` library
+- `opendbc`
+
+```bash
+pip install panda
+```
+
+### Code Summary
 
 ```python
-ser = serial.Serial("COM4", 9600, timeout=1)
+from opendbc.car.structs import CarParams 
+import time
+from panda import Panda
+
+panda = Panda()
+panda.set_safety_mode(CarParams.SafetyModel.allOutput)
+
+try:
+    while True:
+        panda.can_send(0x1CB, b'0000000014000000', 0)
+        time.sleep(0.01)
+except KeyboardInterrupt:
+    print("Logging stopped.")
 ```
 
-You can also add more buttons by copying and adapting the button creation code.
+---
 
-## Example Terminal Output
+## `setupPanda.py`
 
+### Description
+
+This script logs incoming CAN traffic from the Panda device and writes it to a CSV file for analysis.
+
+### Output Format
+
+CSV with columns:
+- Timestamp
+- Bus
+- Address (in hex)
+- Data (in hex)
+
+### Code Summary
+
+```python
+import csv
+import time
+from panda import Panda
+
+p = Panda()
+
+with open('test.csv', mode='w', newline='') as file:
+    writer = csv.writer(file)
+    writer.writerow(['timestamp', 'bus', 'address', 'data'])
+
+    print("Logging CAN data... Press CTRL+C to stop.")
+
+    try:
+        while True:
+            msgs = p.can_recv()
+            now = time.time()
+            for address, data, bus in msgs:
+                writer.writerow([now, bus, hex(address), data.hex()])
+            time.sleep(0.01)
+    except KeyboardInterrupt:
+        print("Logging stopped.")
 ```
-Sent: b'ABCDHello'
-Incoming: b'OK'
-Extra Response: b'Device Ready'
-```
 
-## Known Issues
-
-- If the specified COM port is not found, the script will print:  
-  `"Failed to connect to COM4"`
-- The application does not currently handle reconnecting to a serial port after disconnecting.
-
-## Closing Notes
-
-This script is intended for prototyping and testing purposes. It is a great starting point for more advanced serial GUI tools with dynamic input, logging, or device-specific command sets.
-
-**Author:** *Stephen Ranieri, Cody Cox, Ryan Wilson, Reece Swanson*  
-**Date:** *4/30/2025*
+---
 
 ## License
 
