@@ -1,10 +1,11 @@
 import time
 from panda import Panda
 import can
+from opendbc.car.structs import CarParams
 
 # Set up Panda
 p = Panda()
-p.set_safety_mode(Panda.SAFETY_ALLOUTPUT)
+p.set_safety_mode(CarParams.SafetyModel.allOutput)
 p.set_can_speed_kbps(0, 500)  # Change to your bus speed if needed
 
 # Set up virtual CAN interface
